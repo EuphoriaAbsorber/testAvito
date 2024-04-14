@@ -5,6 +5,7 @@ import (
 	"log"
 	conf "main/config"
 	"net/http"
+	"os"
 
 	"main/delivery"
 	"main/repository"
@@ -29,8 +30,8 @@ func loggingAndHeadersMiddleware(next http.Handler) http.Handler {
 
 func main() {
 	myRouter := mux.NewRouter()
-	urlDB := "postgres://" + conf.DBSPuser + ":" + conf.DBPassword + "@" + conf.DBHost + ":" + conf.DBPort + "/" + conf.DBName
-
+	//urlDB := "postgres://" + conf.DBSPuser + ":" + conf.DBPassword + "@" + conf.DBHost + ":" + conf.DBPort + "/" + conf.DBName
+	urlDB := "postgres://" + os.Getenv("DB_USER") + ":" + os.Getenv("DB_PASSWORD") + "@" + os.Getenv("DB_HOST") + ":" + os.Getenv("DB_PORT") + "/" + os.Getenv("DB_NAME")
 	db, err := sql.Open("pgx", urlDB)
 	if err != nil {
 		log.Fatalln("could not connect to database")
