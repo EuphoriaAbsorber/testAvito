@@ -52,8 +52,10 @@ func main() {
 	myRouter.HandleFunc(conf.PathGetUsers, Handler.GetUsers).Methods(http.MethodGet, http.MethodOptions)
 	//основные
 	myRouter.HandleFunc(conf.PathUserBanner, Handler.GetUserBanner).Methods(http.MethodGet, http.MethodOptions)
-	myRouter.HandleFunc(conf.PathCreateBanner, Handler.CreateBanner).Methods(http.MethodPost, http.MethodOptions)
-	myRouter.HandleFunc(conf.PathUpdateBanner, Handler.UpdateBanner).Methods(http.MethodPatch, http.MethodOptions)
+	myRouter.HandleFunc(conf.PathBanner, Handler.GetBanners).Methods(http.MethodGet, http.MethodOptions)
+	myRouter.HandleFunc(conf.PathBanner, Handler.CreateBanner).Methods(http.MethodPost, http.MethodOptions)
+	myRouter.HandleFunc(conf.PathBannerID, Handler.UpdateBanner).Methods(http.MethodPatch, http.MethodOptions)
+	myRouter.HandleFunc(conf.PathBannerID, Handler.DeleteBanner).Methods(http.MethodDelete, http.MethodOptions)
 
 	myRouter.PathPrefix(conf.PathDocs).Handler(httpSwagger.WrapHandler)
 

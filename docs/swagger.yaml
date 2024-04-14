@@ -45,6 +45,60 @@ info:
   version: "1.0"
 paths:
   /banner:
+    get:
+      consumes:
+      - application/json
+      description: Получение всех баннеров с фильтрацией по фиче и/или тегу
+      operationId: getBanner
+      parameters:
+      - description: token
+        in: header
+        name: token
+        type: string
+      - description: feature_id
+        in: query
+        name: feature_id
+        type: integer
+      - description: tag_id
+        in: query
+        name: tag_id
+        type: integer
+      - description: limit
+        in: query
+        name: limit
+        type: integer
+      - description: offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/model.Error'
+        "401":
+          description: Пользователь не авторизован
+          schema:
+            $ref: '#/definitions/model.Error'
+        "403":
+          description: Пользователь не имеет доступа
+          schema:
+            $ref: '#/definitions/model.Error'
+        "404":
+          description: Не найдено
+          schema:
+            $ref: '#/definitions/model.Error'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/model.Error'
+      summary: Получение всех баннеров с фильтрацией по фиче и/или тегу
     post:
       consumes:
       - application/json
@@ -90,26 +144,20 @@ paths:
             $ref: '#/definitions/model.Error'
       summary: Создание нового баннера
   /banner/{id}:
-    patch:
+    delete:
       consumes:
       - application/json
-      description: Обновление содержимого баннера
-      operationId: updateBanner
+      description: Удаление баннера по идентификатору
+      operationId: deleteBanner
       parameters:
-      - description: Banner params
-        in: body
-        name: banner
-        required: true
-        schema:
-          $ref: '#/definitions/model.CreateBanner'
-      - description: token
-        in: header
-        name: token
-        type: string
       - description: id
         in: path
         name: id
         required: true
+        type: string
+      - description: token
+        in: header
+        name: token
         type: string
       produces:
       - application/json
@@ -128,6 +176,59 @@ paths:
             $ref: '#/definitions/model.Error'
         "403":
           description: Пользователь не имеет доступа
+          schema:
+            $ref: '#/definitions/model.Error'
+        "404":
+          description: Не найдено
+          schema:
+            $ref: '#/definitions/model.Error'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/model.Error'
+      summary: Удаление баннера по идентификатору
+    patch:
+      consumes:
+      - application/json
+      description: Обновление содержимого баннера
+      operationId: updateBanner
+      parameters:
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: token
+        in: header
+        name: token
+        type: string
+      - description: Banner params
+        in: body
+        name: banner
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateBanner'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/model.Error'
+        "401":
+          description: Пользователь не авторизован
+          schema:
+            $ref: '#/definitions/model.Error'
+        "403":
+          description: Пользователь не имеет доступа
+          schema:
+            $ref: '#/definitions/model.Error'
+        "404":
+          description: Не найдено
           schema:
             $ref: '#/definitions/model.Error'
         "500":

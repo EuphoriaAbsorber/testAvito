@@ -14,6 +14,7 @@ import (
 
 type StoreInterface interface {
 	GetUserBannerDB(tagId int, featureId int) (*model.UserBanner, error)
+	GetBannersDB(tagId int, featureId int, limit int, offset int) ([]model.Banner, error)
 	CreateBannerDB(req model.CreateBanner) error
 	UpdateBannerDB(id int, req model.CreateBanner) error
 	DeleteBannerDB(id int) error
@@ -51,6 +52,89 @@ func (s *Store) GetUserBannerDB(tagId int, featureId int) (*model.UserBanner, er
 		return nil, e.ErrNotFound404
 	}
 	return userBanner, nil
+}
+
+func (s *Store) GetBannersDB(tagId int, featureId int, limit int, offset int) ([]model.Banner, error) {
+	if limit == 0 {
+		limit = 10000000
+	}
+	neededBannerIDs := []int{}
+	banners := []model.Banner{}
+	var rows *sql.Rows
+	var err error = nil
+	tmpId := 0
+	//defer rows.Close()
+	if tagId != 0 {
+		if featureId != 0 {
+			rows, err = s.db.Query(`SELECT banner_id FROM bannertags WHERE tag_id = $1 AND feature_id = $2;`, tagId, featureId)
+		} else if featureId == 0 {
+			rows, err = s.db.Query(`SELECT banner_id FROM bannertags WHERE tag_id = $1;`, tagId)
+		}
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+		for rows.Next() {
+			err := rows.Scan(&tmpId)
+			if err != nil {
+				return nil, err
+			}
+			neededBannerIDs = append(neededBannerIDs, tmpId)
+		}
+		counter := 0
+		for ind := range neededBannerIDs {
+			counter++
+			if ind+offset >= len(neededBannerIDs) {
+				break
+			}
+			tmpBanner := model.Banner{}
+			err = s.db.QueryRow(`SELECT id, feature_id, title, text, url, is_active, created_at, updated_at FROM banners WHERE id = $1;`,
+				neededBannerIDs[ind+offset]).Scan(&tmpBanner.Id, &tmpBanner.FeatureId, &tmpBanner.Content.Title, &tmpBanner.Content.Text, &tmpBanner.Content.Url,
+				&tmpBanner.IsActive, &tmpBanner.CreatedAt, &tmpBanner.UpdatedAt)
+			banners = append(banners, tmpBanner)
+			if counter >= limit {
+				break
+			}
+		}
+		if err != nil {
+			return nil, err
+		}
+
+	} else {
+		if featureId != 0 {
+			rows, err = s.db.Query(`SELECT id, feature_id, title, text, url, is_active, created_at, updated_at FROM banners WHERE feature_id = $1 LIMIT $2 OFFSET $3;`, featureId, limit, offset)
+		} else if featureId == 0 {
+			rows, err = s.db.Query(`SELECT id, feature_id, title, text, url, is_active, created_at, updated_at FROM banners LIMIT $1 OFFSET $2;`, limit, offset)
+		}
+		defer rows.Close()
+		if err != nil {
+			return nil, err
+		}
+		for rows.Next() {
+			tmpBanner := model.Banner{}
+			err := rows.Scan(&tmpBanner.Id, &tmpBanner.FeatureId, &tmpBanner.Content.Title, &tmpBanner.Content.Text, &tmpBanner.Content.Url,
+				&tmpBanner.IsActive, &tmpBanner.CreatedAt, &tmpBanner.UpdatedAt)
+			if err != nil {
+				return nil, err
+			}
+			banners = append(banners, tmpBanner)
+		}
+	}
+	for ind, banner := range banners {
+		rows, err = s.db.Query(`SELECT tag_id FROM bannertags WHERE banner_id = $1 AND feature_id = $2;`, banner.Id, banner.FeatureId)
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+		for rows.Next() {
+			err := rows.Scan(&tmpId)
+			if err != nil {
+				return nil, err
+			}
+			banners[ind].Tag_ids = append(banners[ind].Tag_ids, tmpId)
+		}
+	}
+	return banners, nil
 }
 
 func (s *Store) CreateBannerDB(req model.CreateBanner) error {
@@ -114,7 +198,15 @@ func (s *Store) UpdateBannerDB(id int, req model.CreateBanner) error {
 }
 
 func (s *Store) DeleteBannerDB(id int) error {
-	_, err := s.db.Exec(`DELETE FROM banners WHERE id = $1;`, id)
+	bannerID := 0
+	err := s.db.QueryRow(`SELECT id FROM banners WHERE id = $1;`, id).Scan(&bannerID)
+	if err == sql.ErrNoRows {
+		return e.ErrNotFound404
+	}
+	if err != nil {
+		return err
+	}
+	_, err = s.db.Exec(`DELETE FROM banners WHERE id = $1;`, id)
 	if err != nil {
 		return err
 	}
@@ -170,8 +262,7 @@ func (s *Store) FillDB(tagCount int, featureCount int, bannerCount int) error {
 			"url"+fmt.Sprint(i+1),
 		).Scan(&bannerID)
 		if err != nil {
-			_ = s.ClearDB()
-			return err
+			continue
 		}
 		_, err = s.db.Exec(`INSERT INTO bannertags (tag_id, banner_id, feature_id) VALUES ($1, $2, $3);`, tagID, bannerID, featureID)
 		if err != nil {

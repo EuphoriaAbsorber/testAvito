@@ -98,6 +98,74 @@ func (api *Handler) GetUserBanner(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(banner)
 }
 
+// GetBanner godoc
+// @Summary Получение всех баннеров с фильтрацией по фиче и/или тегу
+// @Description Получение всех баннеров с фильтрацией по фиче и/или тегу
+// @ID getBanner
+// @Accept  json
+// @Produce  json
+// @Param token header string false "token"
+// @Param feature_id query int false "feature_id"
+// @Param tag_id query int false "tag_id"
+// @Param limit query int false "limit"
+// @Param offset query int false "offset"
+// @Success 200 {object} model.Response "OK"
+// @Failure 400 {object} model.Error "Некорректные данные"
+// @Failure 401 {object} model.Error "Пользователь не авторизован"
+// @Failure 403 {object} model.Error "Пользователь не имеет доступа"
+// @Failure 404 {object} model.Error "Не найдено"
+// @Failure 500 {object} model.Error "Внутренняя ошибка сервера"
+// @Router /banner [get]
+func (api *Handler) GetBanners(w http.ResponseWriter, r *http.Request) {
+	tagIDs := r.URL.Query().Get("tag_id")
+	featureIDs := r.URL.Query().Get("feature_id")
+	limitS := r.URL.Query().Get("limit")
+	offsetS := r.URL.Query().Get("offset")
+	tagID, featureID, limit, offset := 0, 0, 0, 0
+	var err error
+	if tagIDs != "" {
+		tagID, err = strconv.Atoi(tagIDs)
+		if err != nil {
+			log.Println("error: ", err)
+			ReturnErrorJSON(w, e.ErrBadRequest400, 400)
+			return
+		}
+	}
+	if featureIDs != "" {
+		featureID, err = strconv.Atoi(featureIDs)
+		if err != nil {
+			log.Println("error: ", err)
+			ReturnErrorJSON(w, e.ErrBadRequest400, 400)
+			return
+		}
+	}
+	if limitS != "" {
+		limit, err = strconv.Atoi(limitS)
+		if err != nil {
+			log.Println("error: ", err)
+			ReturnErrorJSON(w, e.ErrBadRequest400, 400)
+			return
+		}
+	}
+	if offsetS != "" {
+		offset, err = strconv.Atoi(offsetS)
+		if err != nil {
+			log.Println("error: ", err)
+			ReturnErrorJSON(w, e.ErrBadRequest400, 400)
+			return
+		}
+	}
+
+	banners, err := api.usecase.GetBanners(tagID, featureID, limit, offset)
+	if err != nil {
+		log.Println("error: ", err)
+		ReturnErrorJSON(w, e.ErrServerError500, 500)
+		return
+	}
+	//log.Println("!!!4")
+	json.NewEncoder(w).Encode(banners)
+}
+
 // CreateBanner godoc
 // @Summary Создание нового баннера
 // @Description Создание нового баннера
@@ -137,13 +205,14 @@ func (api *Handler) CreateBanner(w http.ResponseWriter, r *http.Request) {
 // @ID updateBanner
 // @Accept  json
 // @Produce  json
-// @Param banner body model.CreateBanner true "Banner params"
-// @Param token header string false "token"
 // @Param id path string true "id"
+// @Param token header string false "token"
+// @Param banner body model.CreateBanner true "Banner params"
 // @Success 200 {object} model.Response "OK"
 // @Failure 400 {object} model.Error "Некорректные данные"
 // @Failure 401 {object} model.Error "Пользователь не авторизован"
 // @Failure 403 {object} model.Error "Пользователь не имеет доступа"
+// @Failure 404 {object} model.Error "Не найдено"
 // @Failure 500 {object} model.Error "Внутренняя ошибка сервера"
 // @Router /banner/{id}  [patch]
 func (api *Handler) UpdateBanner(w http.ResponseWriter, r *http.Request) {
@@ -165,6 +234,45 @@ func (api *Handler) UpdateBanner(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = api.usecase.UpdateBanner(id, req)
+	if err == e.ErrNotFound404 {
+		log.Println("error: ", err)
+		ReturnErrorJSON(w, e.ErrNotFound404, 404)
+		return
+	}
+	if err != nil {
+		log.Println("error: ", err)
+		ReturnErrorJSON(w, e.ErrServerError500, 500)
+		return
+	}
+	json.NewEncoder(w).Encode(model.Response{})
+}
+
+// DeleteBanner godoc
+// @Summary Удаление баннера по идентификатору
+// @Description Удаление баннера по идентификатору
+// @ID deleteBanner
+// @Accept  json
+// @Produce  json
+// @Param id path string true "id"
+// @Param token header string false "token"
+// @Success 200 {object} model.Response "OK"
+// @Failure 400 {object} model.Error "Некорректные данные"
+// @Failure 401 {object} model.Error "Пользователь не авторизован"
+// @Failure 403 {object} model.Error "Пользователь не имеет доступа"
+// @Failure 404 {object} model.Error "Не найдено"
+// @Failure 500 {object} model.Error "Внутренняя ошибка сервера"
+// @Router /banner/{id}  [delete]
+func (api *Handler) DeleteBanner(w http.ResponseWriter, r *http.Request) {
+	s := strings.Split(r.URL.Path, "/")
+	idS := s[len(s)-1]
+	id, err := strconv.Atoi(idS)
+	if err != nil {
+		log.Println(err)
+		ReturnErrorJSON(w, e.ErrBadRequest400, 400)
+		return
+	}
+
+	err = api.usecase.DeleteBanner(id)
 	if err == e.ErrNotFound404 {
 		log.Println("error: ", err)
 		ReturnErrorJSON(w, e.ErrNotFound404, 404)
