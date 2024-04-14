@@ -83,6 +83,19 @@ func (api *Handler) GetUserBanner(w http.ResponseWriter, r *http.Request) {
 	if useLastRevision == "true" {
 		useLastRevisionFlag = true
 	}
+	tok := r.Header.Get("token")
+	accessLvl, err := api.usecase.CheckToken(tok)
+	if err == e.ErrUnauthorized401 {
+		log.Println("error: ", err)
+		ReturnErrorJSON(w, e.ErrUnauthorized401, 401)
+		return
+	}
+	if err != nil {
+		log.Println("error: ", err)
+		ReturnErrorJSON(w, e.ErrServerError500, 500)
+		return
+	}
+
 	banner, err := api.usecase.GetUserBanner(tagID, featureID, useLastRevisionFlag)
 	if err == e.ErrNotFound404 {
 		log.Println("error: ", err)
@@ -92,6 +105,11 @@ func (api *Handler) GetUserBanner(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("error: ", err)
 		ReturnErrorJSON(w, e.ErrServerError500, 500)
+		return
+	}
+	if accessLvl == 1 && (!banner.IsActive) {
+		log.Println("banner is unabled for users ")
+		ReturnErrorJSON(w, e.ErrForbidden403, 403)
 		return
 	}
 
@@ -156,13 +174,30 @@ func (api *Handler) GetBanners(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	tok := r.Header.Get("token")
+	accessLvl, err := api.usecase.CheckToken(tok)
+	if err == e.ErrUnauthorized401 {
+		log.Println("error: ", err)
+		ReturnErrorJSON(w, e.ErrUnauthorized401, 401)
+		return
+	}
+	if err != nil {
+		log.Println("error: ", err)
+		ReturnErrorJSON(w, e.ErrServerError500, 500)
+		return
+	}
+	if accessLvl < 2 {
+		log.Println("error: no access")
+		ReturnErrorJSON(w, e.ErrForbidden403, 403)
+		return
+	}
+
 	banners, err := api.usecase.GetBanners(tagID, featureID, limit, offset)
 	if err != nil {
 		log.Println("error: ", err)
 		ReturnErrorJSON(w, e.ErrServerError500, 500)
 		return
 	}
-	//log.Println("!!!4")
 	json.NewEncoder(w).Encode(banners)
 }
 
@@ -187,6 +222,24 @@ func (api *Handler) CreateBanner(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&req)
 	if err != nil {
 		ReturnErrorJSON(w, e.ErrBadRequest400, 400)
+		return
+	}
+
+	tok := r.Header.Get("token")
+	accessLvl, err := api.usecase.CheckToken(tok)
+	if err == e.ErrUnauthorized401 {
+		log.Println("error: ", err)
+		ReturnErrorJSON(w, e.ErrUnauthorized401, 401)
+		return
+	}
+	if err != nil {
+		log.Println("error: ", err)
+		ReturnErrorJSON(w, e.ErrServerError500, 500)
+		return
+	}
+	if accessLvl < 2 {
+		log.Println("error: no access")
+		ReturnErrorJSON(w, e.ErrForbidden403, 403)
 		return
 	}
 
@@ -233,6 +286,24 @@ func (api *Handler) UpdateBanner(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	tok := r.Header.Get("token")
+	accessLvl, err := api.usecase.CheckToken(tok)
+	if err == e.ErrUnauthorized401 {
+		log.Println("error: ", err)
+		ReturnErrorJSON(w, e.ErrUnauthorized401, 401)
+		return
+	}
+	if err != nil {
+		log.Println("error: ", err)
+		ReturnErrorJSON(w, e.ErrServerError500, 500)
+		return
+	}
+	if accessLvl < 2 {
+		log.Println("error: no access")
+		ReturnErrorJSON(w, e.ErrForbidden403, 403)
+		return
+	}
+
 	err = api.usecase.UpdateBanner(id, req)
 	if err == e.ErrNotFound404 {
 		log.Println("error: ", err)
@@ -269,6 +340,23 @@ func (api *Handler) DeleteBanner(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println(err)
 		ReturnErrorJSON(w, e.ErrBadRequest400, 400)
+		return
+	}
+	tok := r.Header.Get("token")
+	accessLvl, err := api.usecase.CheckToken(tok)
+	if err == e.ErrUnauthorized401 {
+		log.Println("error: ", err)
+		ReturnErrorJSON(w, e.ErrUnauthorized401, 401)
+		return
+	}
+	if err != nil {
+		log.Println("error: ", err)
+		ReturnErrorJSON(w, e.ErrServerError500, 500)
+		return
+	}
+	if accessLvl < 2 {
+		log.Println("error: no access")
+		ReturnErrorJSON(w, e.ErrForbidden403, 403)
 		return
 	}
 

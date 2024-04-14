@@ -12,6 +12,7 @@ type UsecaseInterface interface {
 	CreateBanner(req model.CreateBanner) error
 	UpdateBanner(id int, req model.CreateBanner) error
 	DeleteBanner(id int) error
+	CheckToken(tok string) (int, error)
 	FillDB(tagCount int, featureCount int, bannerCount int) error
 	GetUsers() ([]model.User, error)
 }
@@ -40,6 +41,10 @@ func (uc *Usecase) UpdateBanner(id int, req model.CreateBanner) error {
 }
 func (uc *Usecase) DeleteBanner(id int) error {
 	return uc.store.DeleteBannerDB(id)
+}
+
+func (uc *Usecase) CheckToken(tok string) (int, error) {
+	return uc.store.CheckTokenDB(tok)
 }
 
 func (uc *Usecase) FillDB(tagCount int, featureCount int, bannerCount int) error {

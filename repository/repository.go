@@ -18,6 +18,7 @@ type StoreInterface interface {
 	CreateBannerDB(req model.CreateBanner) error
 	UpdateBannerDB(id int, req model.CreateBanner) error
 	DeleteBannerDB(id int) error
+	CheckTokenDB(tok string) (int, error)
 	FillDB(tagCount int, featureCount int, bannerCount int) error
 	GetUsersDB() ([]model.User, error)
 }
@@ -34,7 +35,7 @@ func NewStore(db *sql.DB) StoreInterface {
 
 func (s *Store) GetUserBannerDB(tagId int, featureId int) (*model.UserBanner, error) {
 	userBanner := &model.UserBanner{}
-	rows, err := s.db.Query(`SELECT title, text, url FROM banners b JOIN bannertags bt on b.id = bt.banner_id
+	rows, err := s.db.Query(`SELECT title, text, url, is_active FROM banners b JOIN bannertags bt on b.id = bt.banner_id
 	 WHERE bt.tag_id = $1 AND bt.feature_id = $2;`, tagId, featureId)
 	if err != nil {
 		return nil, err
@@ -42,7 +43,7 @@ func (s *Store) GetUserBannerDB(tagId int, featureId int) (*model.UserBanner, er
 	defer rows.Close()
 
 	for rows.Next() {
-		err := rows.Scan(&userBanner.Title, &userBanner.Text, &userBanner.Url)
+		err := rows.Scan(&userBanner.Title, &userBanner.Text, &userBanner.Url, &userBanner.IsActive)
 
 		if err != nil {
 			return nil, err
@@ -211,6 +212,26 @@ func (s *Store) DeleteBannerDB(id int) error {
 		return err
 	}
 	return nil
+}
+
+func (s *Store) CheckTokenDB(tok string) (int, error) {
+	id := 0
+	err := s.db.QueryRow(`SELECT id FROM admins WHERE token = $1;`, tok).Scan(&id)
+	if id == 0 || err == sql.ErrNoRows {
+		//return 0, e.ErrNotFound404
+		err = s.db.QueryRow(`SELECT id FROM users WHERE token = $1;`, tok).Scan(&id)
+		if id == 0 || err == sql.ErrNoRows {
+			return 0, e.ErrUnauthorized401
+		}
+		if err != nil {
+			return 0, err
+		}
+		return 1, nil
+	}
+	if err != nil {
+		return 0, err
+	}
+	return 2, nil
 }
 
 func (s *Store) ClearDB() error {
