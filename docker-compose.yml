@@ -11,7 +11,7 @@ services:
     networks:
       - mynet
     ports:
-      - 8001:8001
+      - 5432:5432
     volumes:
       - './_postgres:/docker-entrypoint'
       - 'dbData:/var/lib/postgresql/data'
@@ -22,8 +22,8 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=12345
       - DB_NAME=postgres
-      - DB_HOST=127.0.0.1
-      - DB_PORT=8001
+      - DB_HOST=postgres
+      - DB_PORT=5432
     build:
       context: .
     ports:
