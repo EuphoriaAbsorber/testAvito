@@ -1,0 +1,83 @@
+basePath: /api
+definitions:
+  model.Error:
+    properties:
+      error: {}
+    type: object
+  model.UserBanner:
+    properties:
+      text:
+        type: string
+      title:
+        type: string
+      url:
+        type: string
+    type: object
+host: 127.0.0.1:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Banner Service back server.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Banner Service API
+  version: "1.0"
+paths:
+  /user_banner:
+    get:
+      consumes:
+      - application/json
+      description: Gets User Banner
+      operationId: getUserBanner
+      parameters:
+      - description: tag_id
+        in: query
+        name: tag_id
+        required: true
+        type: integer
+      - description: feature_id
+        in: query
+        name: feature_id
+        required: true
+        type: integer
+      - description: use_last_revision
+        in: query
+        name: use_last_revision
+        type: boolean
+      - description: token
+        in: header
+        name: token
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.UserBanner'
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/model.Error'
+        "401":
+          description: Пользователь не авторизован
+          schema:
+            $ref: '#/definitions/model.Error'
+        "403":
+          description: Пользователь не имеет доступа
+          schema:
+            $ref: '#/definitions/model.Error'
+        "404":
+          description: Не найдено
+          schema:
+            $ref: '#/definitions/model.Error'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/model.Error'
+      summary: Gets User Banner
+swagger: "2.0"

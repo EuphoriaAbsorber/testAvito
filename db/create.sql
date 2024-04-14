@@ -23,6 +23,7 @@ CREATE TABLE
     bannertags (
         tag_id INT REFERENCES tags (id) ON DELETE CASCADE,
         banner_id INT REFERENCES banners (id) ON DELETE CASCADE,
+        feature_id INT REFERENCES features (id) ON DELETE CASCADE,
         UNIQUE (tag_id, banner_id)
     );
 
