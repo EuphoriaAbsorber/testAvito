@@ -19,3 +19,10 @@ type User struct {
 	Name  string `json:"name"`
 	Token string `json:"token"`
 }
+
+type CreateBanner struct {
+	Tag_ids   []int      `json:"tag_ids"`
+	FeatureId int        `json:"feature_id"`
+	Content   UserBanner `json:"content"`
+	IsActive  bool       `json:"is_active"`
+}

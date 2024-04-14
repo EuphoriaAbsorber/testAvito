@@ -47,9 +47,13 @@ func main() {
 
 	Handler := delivery.NewHandler(Usecase)
 
+	//вспомогательные
 	myRouter.HandleFunc(conf.PathFillDB, Handler.FillDB).Methods(http.MethodPost, http.MethodOptions)
 	myRouter.HandleFunc(conf.PathGetUsers, Handler.GetUsers).Methods(http.MethodGet, http.MethodOptions)
+	//основные
 	myRouter.HandleFunc(conf.PathUserBanner, Handler.GetUserBanner).Methods(http.MethodGet, http.MethodOptions)
+	myRouter.HandleFunc(conf.PathCreateBanner, Handler.CreateBanner).Methods(http.MethodPost, http.MethodOptions)
+	myRouter.HandleFunc(conf.PathUpdateBanner, Handler.UpdateBanner).Methods(http.MethodPatch, http.MethodOptions)
 
 	myRouter.PathPrefix(conf.PathDocs).Handler(httpSwagger.WrapHandler)
 

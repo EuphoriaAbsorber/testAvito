@@ -14,9 +14,11 @@ import (
 
 type StoreInterface interface {
 	GetUserBannerDB(tagId int, featureId int) (*model.UserBanner, error)
+	CreateBannerDB(req model.CreateBanner) error
+	UpdateBannerDB(id int, req model.CreateBanner) error
 	DeleteBannerDB(id int) error
-	FillDB() error
-	GetUsers() ([]model.User, error)
+	FillDB(tagCount int, featureCount int, bannerCount int) error
+	GetUsersDB() ([]model.User, error)
 }
 
 type Store struct {
@@ -51,6 +53,66 @@ func (s *Store) GetUserBannerDB(tagId int, featureId int) (*model.UserBanner, er
 	return userBanner, nil
 }
 
+func (s *Store) CreateBannerDB(req model.CreateBanner) error {
+	bannerID := 0
+	err := s.db.QueryRow(`INSERT INTO banners (feature_id, title, text, url, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING id;`,
+		req.FeatureId,
+		req.Content.Title,
+		req.Content.Text,
+		req.Content.Url,
+		req.IsActive,
+	).Scan(&bannerID)
+	if err != nil {
+		return err
+	}
+	for _, tagID := range req.Tag_ids {
+		_, err = s.db.Exec(`INSERT INTO bannertags (tag_id, banner_id, feature_id) VALUES ($1, $2, $3);`, tagID, bannerID, req.FeatureId)
+		if err != nil {
+			_ = s.DeleteBannerDB(bannerID)
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Store) UpdateBannerDB(id int, req model.CreateBanner) error {
+	bannerID := 0
+	err := s.db.QueryRow(`SELECT id FROM banners WHERE id = $1;`, id).Scan(&bannerID)
+	if err == sql.ErrNoRows {
+		return e.ErrNotFound404
+	}
+	if err != nil {
+		return err
+	}
+	if bannerID != id {
+		return e.ErrNotFound404
+	}
+	_, err = s.db.Exec(`UPDATE banners SET feature_id = $1, title = $2, text = $3, url = $4, is_active = $5, updated_at = now() WHERE id = $6;`,
+		req.FeatureId,
+		req.Content.Title,
+		req.Content.Text,
+		req.Content.Url,
+		req.IsActive,
+		id,
+	)
+	if err != nil {
+		return err
+	}
+	_, err = s.db.Exec(`DELETE FROM bannertags WHERE banner_id = $1;`, bannerID)
+	if err != nil {
+		return err
+	}
+
+	for _, tagID := range req.Tag_ids {
+		_, err = s.db.Exec(`INSERT INTO bannertags (tag_id, banner_id, feature_id) VALUES ($1, $2, $3);`, tagID, bannerID, req.FeatureId)
+		if err != nil {
+			_ = s.DeleteBannerDB(bannerID)
+			return err
+		}
+	}
+	return nil
+}
+
 func (s *Store) DeleteBannerDB(id int) error {
 	_, err := s.db.Exec(`DELETE FROM banners WHERE id = $1;`, id)
 	if err != nil {
@@ -67,19 +129,19 @@ func (s *Store) ClearDB() error {
 	return nil
 }
 
-func (s *Store) FillDB() error {
+func (s *Store) FillDB(tagCount int, featureCount int, bannerCount int) error {
 	_ = s.ClearDB()
-	tagsCount := 10
-	featuresCount := 10
-	bannersCount := 10
-	for i := 0; i < tagsCount; i++ {
+	//tagsCount := 10
+	//featuresCount := 10
+	//bannersCount := 10
+	for i := 0; i < tagCount; i++ {
 		_, err := s.db.Exec(`INSERT INTO tags (id) VALUES ($1);`, i+1)
 		if err != nil {
 			_ = s.ClearDB()
 			return err
 		}
 	}
-	for i := 0; i < featuresCount; i++ {
+	for i := 0; i < featureCount; i++ {
 		_, err := s.db.Exec(`INSERT INTO features (id) VALUES ($1);`, i+1)
 		if err != nil {
 			_ = s.ClearDB()
@@ -97,10 +159,10 @@ func (s *Store) FillDB() error {
 		_ = s.ClearDB()
 		return err
 	}
-	for i := 0; i < bannersCount; i++ {
+	for i := 0; i < bannerCount; i++ {
 		bannerID := 0
-		featureID := rand.Intn(featuresCount)
-		tagID := rand.Intn(tagsCount)
+		featureID := rand.Intn(featureCount)
+		tagID := rand.Intn(tagCount)
 		err := s.db.QueryRow(`INSERT INTO banners (feature_id, title, text, url) VALUES ($1, $2, $3, $4) RETURNING id;`,
 			featureID,
 			"title"+fmt.Sprint(i+1),
@@ -124,7 +186,7 @@ func (s *Store) FillDB() error {
 	return nil
 }
 
-func (s *Store) GetUsers() ([]model.User, error) {
+func (s *Store) GetUsersDB() ([]model.User, error) {
 	rows, err := s.db.Query(`SELECT id, name, token FROM users;`)
 	if err != nil {
 		return nil, err

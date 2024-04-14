@@ -40,3 +40,5 @@ CREATE TABLE
         name VARCHAR(30) UNIQUE NOT NULL,
         token VARCHAR(36) UNIQUE NOT NULL
     );
+
+CREATE INDEX idx_banner_id ON bannertags (banner_id); 

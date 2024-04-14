@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	e "main/domain/errors"
 	"main/domain/model"
@@ -97,6 +98,86 @@ func (api *Handler) GetUserBanner(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(banner)
 }
 
+// CreateBanner godoc
+// @Summary Создание нового баннера
+// @Description Создание нового баннера
+// @ID createBanner
+// @Accept  json
+// @Produce  json
+// @Param banner body model.CreateBanner true "Banner params"
+// @Param token header string false "token"
+// @Success 201 {object} model.Response "Created"
+// @Failure 400 {object} model.Error "Некорректные данные"
+// @Failure 401 {object} model.Error "Пользователь не авторизован"
+// @Failure 403 {object} model.Error "Пользователь не имеет доступа"
+// @Failure 404 {object} model.Error "Не найдено"
+// @Failure 500 {object} model.Error "Внутренняя ошибка сервера"
+// @Router /banner [post]
+func (api *Handler) CreateBanner(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	var req model.CreateBanner
+	err := decoder.Decode(&req)
+	if err != nil {
+		ReturnErrorJSON(w, e.ErrBadRequest400, 400)
+		return
+	}
+
+	err = api.usecase.CreateBanner(req)
+	if err != nil {
+		log.Println("error: ", err)
+		ReturnErrorJSON(w, e.ErrServerError500, 500)
+		return
+	}
+	json.NewEncoder(w).Encode(model.Response{})
+}
+
+// UpdateBanner godoc
+// @Summary Обновление содержимого баннера
+// @Description Обновление содержимого баннера
+// @ID updateBanner
+// @Accept  json
+// @Produce  json
+// @Param banner body model.CreateBanner true "Banner params"
+// @Param token header string false "token"
+// @Param id path string true "id"
+// @Success 200 {object} model.Response "OK"
+// @Failure 400 {object} model.Error "Некорректные данные"
+// @Failure 401 {object} model.Error "Пользователь не авторизован"
+// @Failure 403 {object} model.Error "Пользователь не имеет доступа"
+// @Failure 500 {object} model.Error "Внутренняя ошибка сервера"
+// @Router /banner/{id}  [patch]
+func (api *Handler) UpdateBanner(w http.ResponseWriter, r *http.Request) {
+	s := strings.Split(r.URL.Path, "/")
+	idS := s[len(s)-1]
+	id, err := strconv.Atoi(idS)
+	if err != nil {
+		log.Println(err)
+		ReturnErrorJSON(w, e.ErrBadRequest400, 400)
+		return
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	var req model.CreateBanner
+	err = decoder.Decode(&req)
+	if err != nil {
+		ReturnErrorJSON(w, e.ErrBadRequest400, 400)
+		return
+	}
+
+	err = api.usecase.UpdateBanner(id, req)
+	if err == e.ErrNotFound404 {
+		log.Println("error: ", err)
+		ReturnErrorJSON(w, e.ErrNotFound404, 404)
+		return
+	}
+	if err != nil {
+		log.Println("error: ", err)
+		ReturnErrorJSON(w, e.ErrServerError500, 500)
+		return
+	}
+	json.NewEncoder(w).Encode(model.Response{})
+}
+
 // FillDB godoc
 // @Summary Заполнение базы тестовыми данными
 // @Description Заполнение базы тестовыми данными
@@ -104,12 +185,37 @@ func (api *Handler) GetUserBanner(w http.ResponseWriter, r *http.Request) {
 // @Accept  json
 // @Produce  json
 // @Tags extra
+// @Param tag_count query int true "tag_count"
+// @Param feature_count query int true "feature_count"
+// @Param banner_count query int true "banner_count"
 // @Success 200 {object} model.Response "OK"
+// @Failure 400 {object} model.Error "Некорректные данные"
 // @Failure 500 {object} model.Error "Внутренняя ошибка сервера"
 // @Router /filldb [post]
 func (api *Handler) FillDB(w http.ResponseWriter, r *http.Request) {
+	tagCountS := r.URL.Query().Get("tag_count")
+	featureCountS := r.URL.Query().Get("feature_count")
+	bannerCountS := r.URL.Query().Get("banner_count")
 
-	err := api.usecase.FillDB()
+	tagCount, err := strconv.Atoi(tagCountS)
+	if err != nil {
+		log.Println("error: ", err)
+		ReturnErrorJSON(w, e.ErrBadRequest400, 400)
+		return
+	}
+	featureCount, err := strconv.Atoi(featureCountS)
+	if err != nil {
+		log.Println("error: ", err)
+		ReturnErrorJSON(w, e.ErrBadRequest400, 400)
+		return
+	}
+	bannerCount, err := strconv.Atoi(bannerCountS)
+	if err != nil {
+		log.Println("error: ", err)
+		ReturnErrorJSON(w, e.ErrBadRequest400, 400)
+		return
+	}
+	err = api.usecase.FillDB(tagCount, featureCount, bannerCount)
 	if err != nil {
 		log.Println("error: ", err)
 		ReturnErrorJSON(w, e.ErrServerError500, 500)

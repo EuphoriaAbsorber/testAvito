@@ -8,7 +8,9 @@ import (
 
 type UsecaseInterface interface {
 	GetUserBanner(tagId int, featureId int, useLastVers bool) (*model.UserBanner, error)
-	FillDB() error
+	CreateBanner(req model.CreateBanner) error
+	UpdateBanner(id int, req model.CreateBanner) error
+	FillDB(tagCount int, featureCount int, bannerCount int) error
 	GetUsers() ([]model.User, error)
 }
 
@@ -25,10 +27,16 @@ func NewUsecase(s rep.StoreInterface) UsecaseInterface {
 func (uc *Usecase) GetUserBanner(tagId int, featureId int, useLastVers bool) (*model.UserBanner, error) {
 	return uc.store.GetUserBannerDB(tagId, featureId)
 }
+func (uc *Usecase) CreateBanner(req model.CreateBanner) error {
+	return uc.store.CreateBannerDB(req)
+}
+func (uc *Usecase) UpdateBanner(id int, req model.CreateBanner) error {
+	return uc.store.UpdateBannerDB(id, req)
+}
 
-func (uc *Usecase) FillDB() error {
-	return uc.store.FillDB()
+func (uc *Usecase) FillDB(tagCount int, featureCount int, bannerCount int) error {
+	return uc.store.FillDB(tagCount, featureCount, bannerCount)
 }
 func (uc *Usecase) GetUsers() ([]model.User, error) {
-	return uc.store.GetUsers()
+	return uc.store.GetUsersDB()
 }
