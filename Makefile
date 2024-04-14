@@ -1,6 +1,9 @@
 build:
 	sudo docker compose up -d --build
 
+init-db-schema:
+	bash createTabkes.sh
+
 build-it:
 	sudo docker compose up --build
 

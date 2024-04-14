@@ -42,3 +42,4 @@ CREATE TABLE
     );
 
 CREATE INDEX idx_banner_id ON bannertags (banner_id); 
+CREATE INDEX idx_feature_id ON bannertags (feature_id); 
