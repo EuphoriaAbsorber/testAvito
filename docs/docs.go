@@ -24,16 +24,46 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/user_banner": {
-            "get": {
-                "description": "Gets User Banner",
+        "/filldb": {
+            "post": {
+                "description": "Заполнение базы тестовыми данными",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Gets User Banner",
+                "tags": [
+                    "extra"
+                ],
+                "summary": "Заполнение базы тестовыми данными",
+                "operationId": "fillDB",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/model.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/user_banner": {
+            "get": {
+                "description": "Получение баннера для пользователя",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Получение баннера для пользователя",
                 "operationId": "getUserBanner",
                 "parameters": [
                     {
@@ -102,6 +132,36 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/users": {
+            "get": {
+                "description": "Получение пользователей и админов",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "extra"
+                ],
+                "summary": "Получение пользователей и админов",
+                "operationId": "GetUsers",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/model.Error"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -109,6 +169,12 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "error": {}
+            }
+        },
+        "model.Response": {
+            "type": "object",
+            "properties": {
+                "body": {}
             }
         },
         "model.UserBanner": {

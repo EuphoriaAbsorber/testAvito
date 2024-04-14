@@ -4,6 +4,10 @@ definitions:
     properties:
       error: {}
     type: object
+  model.Response:
+    properties:
+      body: {}
+    type: object
   model.UserBanner:
     properties:
       text:
@@ -27,11 +31,31 @@ info:
   title: Banner Service API
   version: "1.0"
 paths:
+  /filldb:
+    post:
+      consumes:
+      - application/json
+      description: Заполнение базы тестовыми данными
+      operationId: fillDB
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/model.Error'
+      summary: Заполнение базы тестовыми данными
+      tags:
+      - extra
   /user_banner:
     get:
       consumes:
       - application/json
-      description: Gets User Banner
+      description: Получение баннера для пользователя
       operationId: getUserBanner
       parameters:
       - description: tag_id
@@ -79,5 +103,25 @@ paths:
           description: Внутренняя ошибка сервера
           schema:
             $ref: '#/definitions/model.Error'
-      summary: Gets User Banner
+      summary: Получение баннера для пользователя
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: Получение пользователей и админов
+      operationId: GetUsers
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/model.Error'
+      summary: Получение пользователей и админов
+      tags:
+      - extra
 swagger: "2.0"

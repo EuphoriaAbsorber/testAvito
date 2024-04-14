@@ -8,6 +8,8 @@ import (
 
 type UsecaseInterface interface {
 	GetUserBanner(tagId int, featureId int, useLastVers bool) (*model.UserBanner, error)
+	FillDB() error
+	GetUsers() ([]model.User, error)
 }
 
 type Usecase struct {
@@ -20,6 +22,13 @@ func NewUsecase(s rep.StoreInterface) UsecaseInterface {
 	}
 }
 
-func (api *Usecase) GetUserBanner(tagId int, featureId int, useLastVers bool) (*model.UserBanner, error) {
-	return api.store.GetUserBannerDB(tagId, featureId)
+func (uc *Usecase) GetUserBanner(tagId int, featureId int, useLastVers bool) (*model.UserBanner, error) {
+	return uc.store.GetUserBannerDB(tagId, featureId)
+}
+
+func (uc *Usecase) FillDB() error {
+	return uc.store.FillDB()
+}
+func (uc *Usecase) GetUsers() ([]model.User, error) {
+	return uc.store.GetUsers()
 }

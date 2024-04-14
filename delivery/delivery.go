@@ -45,8 +45,8 @@ func ReturnErrorJSON(w http.ResponseWriter, err error, errCode int) {
 }
 
 // GetUserBanner godoc
-// @Summary Gets User Banner
-// @Description Gets User Banner
+// @Summary Получение баннера для пользователя
+// @Description Получение баннера для пользователя
 // @ID getUserBanner
 // @Accept  json
 // @Produce  json
@@ -83,6 +83,11 @@ func (api *Handler) GetUserBanner(w http.ResponseWriter, r *http.Request) {
 		useLastRevisionFlag = true
 	}
 	banner, err := api.usecase.GetUserBanner(tagID, featureID, useLastRevisionFlag)
+	if err == e.ErrNotFound404 {
+		log.Println("error: ", err)
+		ReturnErrorJSON(w, e.ErrNotFound404, 404)
+		return
+	}
 	if err != nil {
 		log.Println("error: ", err)
 		ReturnErrorJSON(w, e.ErrServerError500, 500)
@@ -90,4 +95,48 @@ func (api *Handler) GetUserBanner(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(banner)
+}
+
+// FillDB godoc
+// @Summary Заполнение базы тестовыми данными
+// @Description Заполнение базы тестовыми данными
+// @ID fillDB
+// @Accept  json
+// @Produce  json
+// @Tags extra
+// @Success 200 {object} model.Response "OK"
+// @Failure 500 {object} model.Error "Внутренняя ошибка сервера"
+// @Router /filldb [post]
+func (api *Handler) FillDB(w http.ResponseWriter, r *http.Request) {
+
+	err := api.usecase.FillDB()
+	if err != nil {
+		log.Println("error: ", err)
+		ReturnErrorJSON(w, e.ErrServerError500, 500)
+		return
+	}
+
+	json.NewEncoder(w).Encode(model.Response{})
+}
+
+// GetUsers godoc
+// @Summary Получение пользователей и админов
+// @Description Получение пользователей и админов
+// @ID GetUsers
+// @Accept  json
+// @Produce  json
+// @Tags extra
+// @Success 200 {object} model.Response "OK"
+// @Failure 500 {object} model.Error "Внутренняя ошибка сервера"
+// @Router /users [get]
+func (api *Handler) GetUsers(w http.ResponseWriter, r *http.Request) {
+
+	users, err := api.usecase.GetUsers()
+	if err != nil {
+		log.Println("error: ", err)
+		ReturnErrorJSON(w, e.ErrServerError500, 500)
+		return
+	}
+
+	json.NewEncoder(w).Encode(model.Response{Body: users})
 }
